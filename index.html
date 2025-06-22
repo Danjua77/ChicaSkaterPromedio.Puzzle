@@ -28,11 +28,35 @@
             border-radius: 50%;
             touch-action: none;
         }
+        #joystick-view {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: 100px;
+            height: 100px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 50%;
+            touch-action: none;
+            z-index: 10;
+        }
+        #stick-view {
+            position: absolute;
+            left: 35px;
+            top: 35px;
+            width: 30px;
+            height: 30px;
+            background: #fff;
+            border-radius: 50%;
+            touch-action: none;
+        }
     </style>
 </head>
 <body>
     <div id="joystick">
         <div id="stick"></div>
+    </div>
+    <div id="joystick-view">
+        <div id="stick-view"></div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
     <script>
@@ -149,6 +173,49 @@
             moveInterval = null;
             dx = dy = 0;
         });
+
+        // Segundo joystick para la vista
+        let joystickView = document.getElementById('joystick-view');
+        let stickView = document.getElementById('stick-view');
+        let draggingView = false, startXView = 0, startYView = 0, dxView = 0, dyView = 0;
+        let viewInterval;
+        let cameraYaw = 0;
+        joystickView.addEventListener('touchstart', function(e) {
+            draggingView = true;
+            let touch = e.touches[0];
+            startXView = touch.clientX;
+            startYView = touch.clientY;
+            stickView.style.transition = 'none';
+        });
+        joystickView.addEventListener('touchmove', function(e) {
+            if (!draggingView) return;
+            let touch = e.touches[0];
+            dxView = touch.clientX - startXView;
+            dyView = touch.clientY - startYView;
+            let dist = Math.sqrt(dxView*dxView + dyView*dyView);
+            if (dist > 40) {
+                dxView = dxView * 40 / dist;
+                dyView = dyView * 40 / dist;
+            }
+            stickView.style.transform = `translate(${dxView}px,${dyView}px)`;
+            if (!viewInterval) {
+                viewInterval = setInterval(() => {
+                    // Solo rotación horizontal (Y)
+                    cameraYaw -= dxView * 0.005;
+                    camera.rotation.y = cameraYaw;
+                }, 16);
+            }
+        });
+        joystickView.addEventListener('touchend', function() {
+            draggingView = false;
+            stickView.style.transition = '0.2s';
+            stickView.style.transform = 'translate(0,0)';
+            clearInterval(viewInterval);
+            viewInterval = null;
+            dxView = dyView = 0;
+        });
+        // Inicializar rotación de cámara
+        cameraYaw = camera.rotation.y;
 
         // Interacción con la puerta
         document.addEventListener('keydown', function(event) {
