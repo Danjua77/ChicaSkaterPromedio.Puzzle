@@ -1,1 +1,166 @@
-ska
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Escape Room 3D</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        #joystick {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            width: 100px;
+            height: 100px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 50%;
+            touch-action: none;
+            z-index: 10;
+        }
+        #stick {
+            position: absolute;
+            left: 35px;
+            top: 35px;
+            width: 30px;
+            height: 30px;
+            background: #fff;
+            border-radius: 50%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="joystick">
+        <div id="stick"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
+    <script>
+        // Configuración básica de Three.js
+        let scene = new THREE.Scene();
+        let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        let renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Piso
+        let floorGeometry = new THREE.PlaneGeometry(20, 20);
+        let floorMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        let floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+        // Paredes
+        let wallMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+        let wall1 = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 0.5), wallMaterial);
+        wall1.position.set(0, 2.5, -10);
+        scene.add(wall1);
+        let wall2 = wall1.clone(); wall2.position.set(0, 2.5, 10); scene.add(wall2);
+        let wall3 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 20), wallMaterial);
+        wall3.position.set(-10, 2.5, 0); scene.add(wall3);
+        let wall4 = wall3.clone(); wall4.position.set(10, 2.5, 0); scene.add(wall4);
+
+        // Puerta (objeto interactivo)
+        let doorMaterial = new THREE.MeshStandardMaterial({ color: 0x663300 });
+        let door = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 0.2), doorMaterial);
+        door.position.set(0, 1.5, -9.75);
+        scene.add(door);
+
+        // Luz
+        let light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(0, 10, 0);
+        scene.add(light);
+
+        camera.position.set(0, 2, 8);
+
+        // Animación
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Colisiones con muros
+        function checkCollision(x, z) {
+            const margin = 1.1;
+            if (x < -10 + margin) return true;
+            if (x > 10 - margin) return true;
+            if (z < -10 + margin) return true;
+            if (z > 10 - margin) return true;
+            return false;
+        }
+
+        // Controles básicos con teclado y colisión
+        document.addEventListener('keydown', function(event) {
+            const speed = 0.3;
+            let nx = camera.position.x;
+            let nz = camera.position.z;
+            if(event.key === 'w') nz -= speed;
+            if(event.key === 's') nz += speed;
+            if(event.key === 'a') nx -= speed;
+            if(event.key === 'd') nx += speed;
+            if(!checkCollision(nx, nz)) {
+                camera.position.x = nx;
+                camera.position.z = nz;
+            }
+        });
+
+        // Joystick móvil
+        let joystick = document.getElementById('joystick');
+        let stick = document.getElementById('stick');
+        let dragging = false, startX = 0, startY = 0, dx = 0, dy = 0;
+        let moveInterval;
+        joystick.addEventListener('touchstart', function(e) {
+            dragging = true;
+            let touch = e.touches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+            stick.style.transition = 'none';
+        });
+        joystick.addEventListener('touchmove', function(e) {
+            if (!dragging) return;
+            let touch = e.touches[0];
+            dx = touch.clientX - startX;
+            dy = touch.clientY - startY;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > 40) {
+                dx = dx * 40 / dist;
+                dy = dy * 40 / dist;
+            }
+            stick.style.transform = `translate(${dx}px,${dy}px)`;
+            if (!moveInterval) {
+                moveInterval = setInterval(() => {
+                    let angle = Math.atan2(dy, dx);
+                    let speed = 0.15;
+                    let nx = camera.position.x + Math.cos(angle) * speed * (Math.abs(dx) > Math.abs(dy) ? 1 : 0);
+                    let nz = camera.position.z + Math.sin(angle) * speed * (Math.abs(dy) > Math.abs(dx) ? 1 : 0);
+                    if(!checkCollision(nx, nz)) {
+                        camera.position.x = nx;
+                        camera.position.z = nz;
+                    }
+                }, 16);
+            }
+        });
+        joystick.addEventListener('touchend', function() {
+            dragging = false;
+            stick.style.transition = '0.2s';
+            stick.style.transform = 'translate(0,0)';
+            clearInterval(moveInterval);
+            moveInterval = null;
+            dx = dy = 0;
+        });
+
+        // Interacción con la puerta
+        document.addEventListener('keydown', function(event) {
+            if(event.key === 'e') {
+                if(Math.abs(camera.position.z + 9.75) < 2 && Math.abs(camera.position.x) < 2) {
+                    door.rotation.y -= Math.PI/2;
+                    setTimeout(()=>{
+                        alert('¡Has escapado!');
+                    }, 500);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
