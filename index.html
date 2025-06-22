@@ -3,16 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Escape Room 3D</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
     <style>
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
         body { margin: 0; overflow: hidden; }
-        canvas { display: block; }
+        canvas { display: block; width: 100vw !important; height: 100vh !important; }
         #joystick {
             position: fixed;
-            left: 20px;
-            bottom: 20px;
-            width: 100px;
-            height: 100px;
+            left: 10vw;
+            bottom: 8vh;
+            width: 18vw;
+            height: 18vw;
+            min-width: 80px;
+            min-height: 80px;
+            max-width: 140px;
+            max-height: 140px;
             background: rgba(0,0,0,0.2);
             border-radius: 50%;
             touch-action: none;
@@ -20,13 +31,48 @@
         }
         #stick {
             position: absolute;
-            left: 35px;
-            top: 35px;
-            width: 30px;
-            height: 30px;
+            left: 35%;
+            top: 35%;
+            width: 30%;
+            height: 30%;
             background: #fff;
             border-radius: 50%;
             touch-action: none;
+        }
+        #look-joystick {
+            position: fixed;
+            right: 10vw;
+            bottom: 8vh;
+            width: 18vw;
+            height: 18vw;
+            min-width: 80px;
+            min-height: 80px;
+            max-width: 140px;
+            max-height: 140px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 50%;
+            z-index: 10;
+        }
+        #look-stick {
+            position: absolute;
+            left: 35%;
+            top: 35%;
+            width: 30%;
+            height: 30%;
+            background: #fff;
+            border-radius: 50%;
+            touch-action: none;
+        }
+        @media (orientation: landscape) {
+            #joystick, #look-joystick {
+                bottom: 5vh;
+                width: 14vw;
+                height: 14vw;
+                min-width: 70px;
+                min-height: 70px;
+                max-width: 120px;
+                max-height: 120px;
+            }
         }
     </style>
 </head>
@@ -34,8 +80,8 @@
     <div id="joystick">
         <div id="stick"></div>
     </div>
-    <div id="joystick-view" style="position:fixed;right:20px;bottom:20px;width:100px;height:100px;background:rgba(0,0,0,0.2);border-radius:50%;touch-action:none;z-index:10;">
-        <div id="stick-view" style="position:absolute;left:35px;top:35px;width:30px;height:30px;background:#fff;border-radius:50%;touch-action:none;"></div>
+    <div id="look-joystick" style="position:fixed;right:20px;bottom:20px;width:100px;height:100px;background:rgba(0,0,0,0.2);border-radius:50%;z-index:10;">
+        <div id="look-stick" style="position:absolute;left:35px;top:35px;width:30px;height:30px;background:#fff;border-radius:50%;touch-action:none;"></div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
     <script>
@@ -93,15 +139,38 @@
             return false;
         }
 
+        let cameraYaw = 0;
+        let cameraPitch = 0;
+
+        function updateCameraRotation() {
+            camera.rotation.order = 'YXZ';
+            camera.rotation.y = cameraYaw;
+            camera.rotation.x = cameraPitch;
+        }
+
         // Controles básicos con teclado y colisión
         document.addEventListener('keydown', function(event) {
             const speed = 0.3;
             let nx = camera.position.x;
             let nz = camera.position.z;
-            if(event.key === 'w') nz -= speed;
-            if(event.key === 's') nz += speed;
-            if(event.key === 'a') nx -= speed;
-            if(event.key === 'd') nx += speed;
+            let forward = getForwardVector();
+            let right = getRightVector();
+            if(event.key === 'w') {
+                nx += forward.x * speed;
+                nz += forward.z * speed;
+            }
+            if(event.key === 's') {
+                nx -= forward.x * speed;
+                nz -= forward.z * speed;
+            }
+            if(event.key === 'a') {
+                nx -= right.x * speed;
+                nz -= right.z * speed;
+            }
+            if(event.key === 'd') {
+                nx += right.x * speed;
+                nz += right.z * speed;
+            }
             if(!checkCollision(nx, nz)) {
                 camera.position.x = nx;
                 camera.position.z = nz;
@@ -133,10 +202,11 @@
             stick.style.transform = `translate(${dx}px,${dy}px)`;
             if (!moveInterval) {
                 moveInterval = setInterval(() => {
-                    let angle = Math.atan2(dy, dx);
                     let speed = 0.15;
-                    let nx = camera.position.x + Math.cos(angle) * speed * (Math.abs(dx) > Math.abs(dy) ? 1 : 0);
-                    let nz = camera.position.z + Math.sin(angle) * speed * (Math.abs(dy) > Math.abs(dx) ? 1 : 0);
+                    let forward = getForwardVector();
+                    let right = getRightVector();
+                    let nx = camera.position.x + (right.x * dx/40 + forward.x * -dy/40) * speed;
+                    let nz = camera.position.z + (right.z * dx/40 + forward.z * -dy/40) * speed;
                     if(!checkCollision(nx, nz)) {
                         camera.position.x = nx;
                         camera.position.z = nz;
@@ -153,41 +223,71 @@
             dx = dy = 0;
         });
 
-        // Joystick para la vista (rotación de cámara)
-        let joystickView = document.getElementById('joystick-view');
-        let stickView = document.getElementById('stick-view');
-        let draggingView = false, startXView = 0, dxView = 0;
-        let rotateInterval;
-        joystickView.addEventListener('touchstart', function(e) {
-            draggingView = true;
+        // Joystick para mirar
+        let lookJoystick = document.getElementById('look-joystick');
+        let lookStick = document.getElementById('look-stick');
+        let lookDragging = false, lookStartX = 0, lookStartY = 0, lookDx = 0, lookDy = 0;
+        lookJoystick.addEventListener('touchstart', function(e) {
+            lookDragging = true;
             let touch = e.touches[0];
-            startXView = touch.clientX;
-            stickView.style.transition = 'none';
+            lookStartX = touch.clientX;
+            lookStartY = touch.clientY;
+            lookStick.style.transition = 'none';
         });
-        joystickView.addEventListener('touchmove', function(e) {
-            if (!draggingView) return;
+        lookJoystick.addEventListener('touchmove', function(e) {
+            if (!lookDragging) return;
             let touch = e.touches[0];
-            dxView = touch.clientX - startXView;
-            let dist = Math.abs(dxView);
+            lookDx = touch.clientX - lookStartX;
+            lookDy = touch.clientY - lookStartY;
+            let dist = Math.sqrt(lookDx*lookDx + lookDy*lookDy);
             if (dist > 40) {
-                dxView = dxView * 40 / dist;
+                lookDx = lookDx * 40 / dist;
+                lookDy = lookDy * 40 / dist;
             }
-            stickView.style.transform = `translate(${dxView}px,0px)`;
-            if (!rotateInterval) {
-                rotateInterval = setInterval(() => {
-                    // Rotar la cámara en Y
-                    camera.rotation.y -= dxView * 0.005;
-                }, 16);
+            lookStick.style.transform = `translate(${lookDx}px,${lookDy}px)`;
+            // Sensibilidad
+            cameraYaw -= lookDx * 0.005;
+            cameraPitch -= lookDy * 0.005;
+            cameraPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, cameraPitch));
+            updateCameraRotation();
+            lookStartX = touch.clientX;
+            lookStartY = touch.clientY;
+        });
+        lookJoystick.addEventListener('touchend', function() {
+            lookDragging = false;
+            lookStick.style.transition = '0.2s';
+            lookStick.style.transform = 'translate(0,0)';
+            lookDx = lookDy = 0;
+        });
+        // Mouse para mirar (opcional en PC)
+        let mouseLook = false, lastMouseX = 0, lastMouseY = 0;
+        document.addEventListener('mousedown', function(e) {
+            if (e.target === renderer.domElement) {
+                mouseLook = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
             }
         });
-        joystickView.addEventListener('touchend', function() {
-            draggingView = false;
-            stickView.style.transition = '0.2s';
-            stickView.style.transform = 'translate(0,0)';
-            clearInterval(rotateInterval);
-            rotateInterval = null;
-            dxView = 0;
+        document.addEventListener('mousemove', function(e) {
+            if (!mouseLook) return;
+            let dx = e.clientX - lastMouseX;
+            let dy = e.clientY - lastMouseY;
+            cameraYaw -= dx * 0.005;
+            cameraPitch -= dy * 0.005;
+            cameraPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, cameraPitch));
+            updateCameraRotation();
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
         });
+        document.addEventListener('mouseup', function() { mouseLook = false; });
+
+        // Modificar controles para moverse en la dirección de la cámara
+        function getForwardVector() {
+            return new THREE.Vector3(-Math.sin(cameraYaw), 0, -Math.cos(cameraYaw));
+        }
+        function getRightVector() {
+            return new THREE.Vector3(Math.cos(cameraYaw), 0, -Math.sin(cameraYaw));
+        }
 
         // Interacción con la puerta
         document.addEventListener('keydown', function(event) {
