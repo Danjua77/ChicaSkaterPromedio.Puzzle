@@ -162,5 +162,46 @@
             }
         });
     </script>
+    <script>
+    // Control de vista táctil (rotación de cámara)
+    let rotating = false, lastTouchX = 0, lastTouchY = 0, camYaw = 0, camPitch = 0;
+    camYaw = 0; // Ángulo horizontal
+    camPitch = 0; // Ángulo vertical
+    camera.rotation.order = "YXZ";
+    
+    function updateCameraRotation() {
+        camera.rotation.y = camYaw;
+        camera.rotation.x = camPitch;
+    }
+    
+    document.addEventListener('touchstart', function(e) {
+        // Ignorar si el toque es sobre el joystick
+        if (e.target.closest('#joystick')) return;
+        if (e.touches.length === 1) {
+            rotating = true;
+            lastTouchX = e.touches[0].clientX;
+            lastTouchY = e.touches[0].clientY;
+        }
+    });
+    document.addEventListener('touchmove', function(e) {
+        if (!rotating || e.target.closest('#joystick')) return;
+        let touch = e.touches[0];
+        let dx = touch.clientX - lastTouchX;
+        let dy = touch.clientY - lastTouchY;
+        lastTouchX = touch.clientX;
+        lastTouchY = touch.clientY;
+        // Sensibilidad
+        camYaw -= dx * 0.008;
+        camPitch -= dy * 0.008;
+        // Limitar pitch para no voltear la cámara
+        camPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, camPitch));
+        updateCameraRotation();
+    });
+    document.addEventListener('touchend', function(e) {
+        if (e.touches.length === 0) rotating = false;
+    });
+    // Inicializar rotación de cámara
+    updateCameraRotation();
+    </script>
 </body>
 </html>
