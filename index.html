@@ -34,6 +34,9 @@
     <div id="joystick">
         <div id="stick"></div>
     </div>
+    <div id="joystick-view" style="position:fixed;right:20px;bottom:20px;width:100px;height:100px;background:rgba(0,0,0,0.2);border-radius:50%;touch-action:none;z-index:10;">
+        <div id="stick-view" style="position:absolute;left:35px;top:35px;width:30px;height:30px;background:#fff;border-radius:50%;touch-action:none;"></div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
     <script>
         // Configuración básica de Three.js
@@ -150,6 +153,42 @@
             dx = dy = 0;
         });
 
+        // Joystick para la vista (rotación de cámara)
+        let joystickView = document.getElementById('joystick-view');
+        let stickView = document.getElementById('stick-view');
+        let draggingView = false, startXView = 0, dxView = 0;
+        let rotateInterval;
+        joystickView.addEventListener('touchstart', function(e) {
+            draggingView = true;
+            let touch = e.touches[0];
+            startXView = touch.clientX;
+            stickView.style.transition = 'none';
+        });
+        joystickView.addEventListener('touchmove', function(e) {
+            if (!draggingView) return;
+            let touch = e.touches[0];
+            dxView = touch.clientX - startXView;
+            let dist = Math.abs(dxView);
+            if (dist > 40) {
+                dxView = dxView * 40 / dist;
+            }
+            stickView.style.transform = `translate(${dxView}px,0px)`;
+            if (!rotateInterval) {
+                rotateInterval = setInterval(() => {
+                    // Rotar la cámara en Y
+                    camera.rotation.y -= dxView * 0.005;
+                }, 16);
+            }
+        });
+        joystickView.addEventListener('touchend', function() {
+            draggingView = false;
+            stickView.style.transition = '0.2s';
+            stickView.style.transform = 'translate(0,0)';
+            clearInterval(rotateInterval);
+            rotateInterval = null;
+            dxView = 0;
+        });
+
         // Interacción con la puerta
         document.addEventListener('keydown', function(event) {
             if(event.key === 'e') {
@@ -161,47 +200,6 @@
                 }
             }
         });
-    </script>
-    <script>
-    // Control de vista táctil (rotación de cámara)
-    let rotating = false, lastTouchX = 0, lastTouchY = 0, camYaw = 0, camPitch = 0;
-    camYaw = 0; // Ángulo horizontal
-    camPitch = 0; // Ángulo vertical
-    camera.rotation.order = "YXZ";
-    
-    function updateCameraRotation() {
-        camera.rotation.y = camYaw;
-        camera.rotation.x = camPitch;
-    }
-    
-    document.addEventListener('touchstart', function(e) {
-        // Ignorar si el toque es sobre el joystick
-        if (e.target.closest('#joystick')) return;
-        if (e.touches.length === 1) {
-            rotating = true;
-            lastTouchX = e.touches[0].clientX;
-            lastTouchY = e.touches[0].clientY;
-        }
-    });
-    document.addEventListener('touchmove', function(e) {
-        if (!rotating || e.target.closest('#joystick')) return;
-        let touch = e.touches[0];
-        let dx = touch.clientX - lastTouchX;
-        let dy = touch.clientY - lastTouchY;
-        lastTouchX = touch.clientX;
-        lastTouchY = touch.clientY;
-        // Sensibilidad
-        camYaw -= dx * 0.008;
-        camPitch -= dy * 0.008;
-        // Limitar pitch para no voltear la cámara
-        camPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, camPitch));
-        updateCameraRotation();
-    });
-    document.addEventListener('touchend', function(e) {
-        if (e.touches.length === 0) rotating = false;
-    });
-    // Inicializar rotación de cámara
-    updateCameraRotation();
     </script>
 </body>
 </html>
