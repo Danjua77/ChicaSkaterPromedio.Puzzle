@@ -203,7 +203,22 @@
             border: 2px solid #ffe44d;
         }
         /* Estilos del juego de memoria 4x4 */
+        body { font-family: 'Montserrat', Arial, sans-serif; text-align: center; background: #000; margin: 0; min-height: 100vh; }
+        .memory-bg-fade {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            transition: opacity 1.2s cubic-bezier(.77,0,.18,1);
+            opacity: 1;
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+        }
         .container {
+            position: relative;
+            z-index: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -353,8 +368,22 @@
                 // Reemplaza el juego de pong por el juego de memoria 4x4
                 document.body.innerHTML = `
 <style>
-    body { font-family: 'Montserrat', Arial, sans-serif; text-align: center; background: url('fonde mesa.jpg') no-repeat center center, linear-gradient(180deg, #e8f5e9 0%, #178a2c 100%); background-size: cover; margin: 0; min-height: 100vh; }
+    body { font-family: 'Montserrat', Arial, sans-serif; text-align: center; background: #000; margin: 0; min-height: 100vh; }
+    .memory-bg-fade {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        z-index: 0;
+        pointer-events: none;
+        transition: opacity 1.2s cubic-bezier(.77,0,.18,1);
+        opacity: 1;
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+    }
     .container {
+        position: relative;
+        z-index: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -452,6 +481,7 @@
         z-index: 2;
     }
 </style>
+<div class="memory-bg-fade" id="memory-bg-fade"></div>
 <div class="container">
     <div id="level">Nivel: 1/???</div>
     <div id="game-board"></div>
@@ -609,6 +639,28 @@
                 });
 
                 createBoard();
+
+                // Fondo cambiante con fade
+                const bgImages = [
+                    'gym.jpeg',
+                    'silla1.jpeg',
+                    'iguana.jpeg',
+                    'Silla2.jpeg'
+                ];
+                let bgIdx = 0;
+                const bgDiv = document.getElementById('memory-bg-fade');
+                function setBg(idx) {
+                    bgDiv.style.opacity = 0;
+                    setTimeout(() => {
+                        bgDiv.style.backgroundImage = `url('${bgImages[idx]}')`;
+                        bgDiv.style.opacity = 1;
+                    }, 600);
+                }
+                setBg(bgIdx);
+                setInterval(() => {
+                    bgIdx = (bgIdx + 1) % bgImages.length;
+                    setBg(bgIdx);
+                }, 6000);
 
                 function mostrarPistaFinal() {
                     document.body.innerHTML = `
