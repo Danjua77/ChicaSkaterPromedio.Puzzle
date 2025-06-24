@@ -2,289 +2,717 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Escape Room 3D</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <title>Don Árbolito Sequence</title>
+    <!-- Agrega meta viewport para móviles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         html, body {
-            width: 100vw;
-            height: 100vh;
+            height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            background: #e8f5e9;
+            /* Elimina centrado y flex del body */
+            width: 100vw;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
-        body { margin: 0; overflow: hidden; }
-        canvas { display: block; width: 100vw !important; height: 100vh !important; }
-        #joystick, #look-joystick {
+        body {
+            /* Elimina flex y centrado */
+            width: 100vw;
+            min-height: 100vh;
+
+            /* Haz la animación de fade-in más rápida */
+            opacity: 0;
+            transition: opacity 1.5s cubic-bezier(.77,0,.18,1);
+        }
+        body.fade-in {
+            opacity: 1;
+        }
+        .arbol-chan-container {
+            /* Haz que ocupe toda la pantalla y se fije */
             position: fixed;
-            width: 18vw;
-            height: 18vw;
-            min-width: 80px;
-            min-height: 80px;
-            max-width: 140px;
-            max-height: 140px;
-            background: #bbb;
-            border-radius: 50%;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: url('Fondo texto.jpg') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: none;
+            border-radius: 0;
+            overflow: auto;
+            /* Elimina max/min width/height */
+        }
+        .arbol-chan-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 92vw;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 2.5vh 0 2.5vh 0;
+            /* Quitar fondo, borde y sombra */
+            background: none;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        /* Imagen baja desde arriba */
+        .arbol-chan-img {
+            width: 44vw;
+            max-width: 180px;
+            min-width: 90px;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            transition: opacity 1.2s, transform 1.2s cubic-bezier(.77,0,.18,1);
+            transform: translateY(-120px);
+        }
+        .arbol-chan-img.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .arbol-chan-titulo {
+            font-family: 'Montserrat', Arial, sans-serif;
+            color: #178a2c;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 0.7rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            text-shadow: 0 2px 12px #fff, 0 0 12px #178a2c, 2px 2px 0 #fff;
+        }
+        .arbol-chan-texto {
+            color: #fff;
+            font-family: 'Roboto', Arial, sans-serif;
+            font-size: 1.05rem;
+            margin-top: 0.3rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            text-shadow: 0 2px 8px #000;
+        }
+        .btn-continuar {
+            margin-top: 0.3rem;
+            font-size: 1.1rem;
+            background: #178a2c;
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            padding: 0.6rem 2rem;
+            font-weight: bold;
+            font-family: 'Montserrat', Arial, sans-serif;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s;
+        }
+        .btn-continuar:active {
+            background: #176d13;
+            border: 2px solid #ffe44d;
+        }
+        /* Pong styles (copiados tal cual del flujo original) */
+        #pong-container {
+            /* Centrado absoluto vertical y horizontal */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: url('fonde mesa.jpg') no-repeat center center, linear-gradient(180deg, #e8f5e9 0%, #178a2c 100%);
+            background-size: cover;
+            /* Elimina cualquier margen/padding extra */
+            margin: 0;
+            padding: 0;
+        }
+        #pong-canvas {
+            background: transparent;
+            display: block;
+            margin: 0; /* Elimina auto para evitar desplazamiento */
+            width: 92vw;
+            height: 70vh;
+            max-width: 370px;
+            max-height: 620px;
+            aspect-ratio: 9/16;
+            border-radius: 18px;
+            box-shadow: 0 0 32px 4px #178a2c88, 0 0 0 4px #178a2c;
             touch-action: none;
-            z-index: 10;
         }
-        #joystick {
-            left: 10vw;
-            bottom: 8vh;
-        }
-        #look-joystick {
-            right: 10vw;
-            bottom: 8vh;
-        }
-        #stick, #look-stick {
+        #pong-end {
             position: absolute;
-            left: 35%;
-            top: 35%;
-            width: 30%;
-            height: 30%;
-            background: #fff;
-            border-radius: 50%;
-            touch-action: none;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: url('Fondo texto.jpg') no-repeat center center;
+            background-size: cover;
+            color: #178a2c;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            font-family: 'Montserrat', Arial, sans-serif;
         }
-        @media (orientation: landscape) {
-            #joystick, #look-joystick {
-                bottom: 5vh;
-                width: 14vw;
-                height: 14vw;
-                min-width: 70px;
-                min-height: 70px;
-                max-width: 120px;
-                max-height: 120px;
-            }
+        #pong-end .arbol-img {
+            width: 38vw;
+            max-width: 180px;
+            min-width: 90px;
+            margin-top: 2.5rem;
+            margin-bottom: 1.2rem;
+            filter: drop-shadow(0 4px 16px #fff);
+        }
+        #pong-end h2 {
+            font-size: 2.2rem;
+            margin-bottom: 2rem;
+            color: #178a2c;
+            text-align: center;
+            text-shadow: 0 2px 12px #fff, 0 0 12px #178a2c, 2px 2px 0 #fff;
+            margin-top: 0;
+        }
+        #pong-next-img {
+            width: 60vw;
+            max-width: 300px;
+            min-width: 120px;
+            height: 180px;
+            background: #fff;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px #178a2c33;
+        }
+        #pong-end button {
+            font-size: 1.3rem;
+            background: #178a2c;
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            padding: 0.7rem 2.5rem;
+            font-weight: bold;
+            font-family: 'Montserrat', Arial, sans-serif;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            cursor: pointer;
+            margin-top: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        #pong-end button:active {
+            background: #176d13;
+            border: 2px solid #ffe44d;
         }
     </style>
 </head>
 <body>
-    <div id="joystick">
-        <div id="stick"></div>
+    <div class="arbol-chan-container" id="arbol-chan-container">
+        <div class="arbol-chan-content">
+            <img src="Skategirl.png" class="arbol-chan-img" id="arbol-chan-img" alt="Skate-girl" />
+            <div class="arbol-chan-titulo" id="arbol-chan-titulo">Chica Skater Promedio</div>
+            <div class="arbol-chan-texto" id="arbol-chan-texto">
+                Ugh… ¿otra persona queriendo una pista? <br>Qué estrés. En fin.
+            </div>
+            <button class="btn-continuar" id="btn-continuar">Continuar</button>
+        </div>
     </div>
-    <div id="look-joystick">
-        <div id="look-stick"></div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
     <script>
-        // Configuración básica de Three.js
-        let scene = new THREE.Scene();
-        let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        let renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        // Animación de entrada de Don Árbol
+        const arbolChanImg = document.getElementById('arbol-chan-img');
+        setTimeout(() => {
+            arbolChanImg.classList.add('visible');
+        }, 800);
 
-        // Piso
-        let floorGeometry = new THREE.PlaneGeometry(20, 20);
-        let floorMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
-        let floor = new THREE.Mesh(floorGeometry, floorMaterial);
-        floor.rotation.x = -Math.PI / 2;
-        scene.add(floor);
+        // Elimina los fade-in para título, texto y botón
+        /*
+        setTimeout(() => {
+            document.getElementById('arbol-chan-titulo').classList.add('visible');
+        }, 1100);
+        setTimeout(() => {
+            document.getElementById('arbol-chan-texto').classList.add('visible');
+        }, 1300);
+        setTimeout(() => {
+            document.getElementById('btn-continuar').classList.add('visible');
+        }, 1500);
+        */
 
-        // Paredes
-        let wallMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
-        let wall1 = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 0.5), wallMaterial);
-        wall1.position.set(0, 2.5, -10);
-        scene.add(wall1);
-        let wall2 = wall1.clone(); wall2.position.set(0, 2.5, 10); scene.add(wall2);
-        let wall3 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 20), wallMaterial);
-        wall3.position.set(-10, 2.5, 0); scene.add(wall3);
-        let wall4 = wall3.clone(); wall4.position.set(10, 2.5, 0); scene.add(wall4);
-
-        // Puerta (objeto interactivo)
-        let doorMaterial = new THREE.MeshStandardMaterial({ color: 0x663300 });
-        let door = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 0.2), doorMaterial);
-        door.position.set(0, 1.5, -9.75);
-        scene.add(door);
-        // Manilla naranja
-        let handleMaterial = new THREE.MeshStandardMaterial({ color: 0xff9900 });
-        let handle = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.1), handleMaterial);
-        handle.position.set(0.7, 1.5, -9.75 + 0.2/2 + 0.1/2); // Pegada a la puerta
-        scene.add(handle);
-
-        // Luz
-        let light = new THREE.PointLight(0xffffff, 1, 100);
-        light.position.set(0, 10, 0);
-        scene.add(light);
-
-        camera.position.set(0, 2, 8);
-
-        // Animación
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        // Colisiones con muros
-        function checkCollision(x, z) {
-            const margin = 1.1;
-            if (x < -10 + margin) return true;
-            if (x > 10 - margin) return true;
-            if (z < -10 + margin) return true;
-            if (z > 10 - margin) return true;
-            return false;
-        }
-
-        let cameraYaw = 0;
-        let cameraPitch = 0;
-
-        function updateCameraRotation() {
-            camera.rotation.order = 'YXZ';
-            camera.rotation.y = cameraYaw;
-            camera.rotation.x = cameraPitch;
-        }
-
-        // Controles básicos con teclado y colisión
-        document.addEventListener('keydown', function(event) {
-            const speed = 0.3;
-            let nx = camera.position.x;
-            let nz = camera.position.z;
-            let forward = getForwardVector();
-            let right = getRightVector();
-            if(event.key === 'w') {
-                nx += forward.x * speed;
-                nz += forward.z * speed;
-            }
-            if(event.key === 's') {
-                nx -= forward.x * speed;
-                nz -= forward.z * speed;
-            }
-            if(event.key === 'a') {
-                nx -= right.x * speed;
-                nz -= right.z * speed;
-            }
-            if(event.key === 'd') {
-                nx += right.x * speed;
-                nz += right.z * speed;
-            }
-            if(!checkCollision(nx, nz)) {
-                camera.position.x = nx;
-                camera.position.z = nz;
-            }
+        // Agrega la clase fade-in al cargar la página para el efecto lento
+        window.addEventListener('DOMContentLoaded', function() {
+            document.body.classList.add('fade-in');
         });
 
-        // Joystick móvil
-        let joystick = document.getElementById('joystick');
-        let stick = document.getElementById('stick');
-        let dragging = false, startX = 0, startY = 0, dx = 0, dy = 0;
-        let moveInterval;
-        joystick.addEventListener('touchstart', function(e) {
-            dragging = true;
-            let touch = e.touches[0];
-            startX = touch.clientX;
-            startY = touch.clientY;
-            stick.style.transition = 'none';
-        });
-        joystick.addEventListener('touchmove', function(e) {
-            if (!dragging) return;
-            let touch = e.touches[0];
-            dx = touch.clientX - startX;
-            dy = touch.clientY - startY;
-            let dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist > 40) {
-                dx = dx * 40 / dist;
-                dy = dy * 40 / dist;
-            }
-            stick.style.transform = `translate(${dx}px,${dy}px)`;
-            if (!moveInterval) {
-                moveInterval = setInterval(() => {
-                    let speed = 0.15;
-                    let forward = getForwardVector();
-                    let right = getRightVector();
-                    let nx = camera.position.x + (right.x * dx/40 + forward.x * -dy/40) * speed;
-                    let nz = camera.position.z + (right.z * dx/40 + forward.z * -dy/40) * speed;
-                    if(!checkCollision(nx, nz)) {
-                        camera.position.x = nx;
-                        camera.position.z = nz;
+        // Secuencia de diálogo y juego de ping pong
+        let arbolChanDialogStep = 0;
+        const arbolChanTexto = document.getElementById('arbol-chan-texto');
+        const btnContinuar = document.getElementById('btn-continuar');
+        btnContinuar.addEventListener('click', function() {
+            if (arbolChanDialogStep === 0) {
+                arbolChanTexto.innerHTML = "Soy tu última prueba para encontrar el caché. Literal #FinalBoss.";
+                arbolChanDialogStep = 1;
+            } else if (arbolChanDialogStep === 1) {
+                arbolChanTexto.innerHTML = "Si quieres la siguiente pista, memoriza el patrón de mis latas de Monster...<br>o dile a tu mamá que los niños grandes no te quieren dar la pista😂.";
+                arbolChanDialogStep = 2;
+            } else {
+                // Muestra el canvas y el cuadro azul, pero el juego inicia tras el contador
+                document.body.innerHTML = `
+<style>
+    /* ... pong styles already included above ... */
+</style>
+<div id="pong-container">
+    <!-- Image above the blue box -->
+    <img src="DonArbolito.png" alt="Don Árbol" style="width:28vw;max-width:110px;min-width:60px;margin-bottom:1.2vh;margin-top:calc(2vh - 20px);z-index:2;position:absolute;top:calc(2vh - 17px);left:50%;transform:translateX(-50%);" id="pong-top-img" />
+    <canvas id="pong-canvas"></canvas>
+    <div id="pong-countdown"
+        style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:50;pointer-events:none;">
+        <span id="pong-countdown-num"
+            style="font-family:'Montserrat',Arial,sans-serif;font-size:4rem;color:#fff;text-shadow:0 2px 16px #178a2c,0 0 12px #fff;">
+            3
+        </span>
+    </div>
+</div>
+<div id="ost-text" style="position:fixed;bottom:18px;left:0;width:100vw;text-align:center;z-index:20;font-family:'Montserrat',Arial,sans-serif;font-size:1.05rem;color:#fff;text-shadow:0 2px 8px #000;">
+    OST: Mt. Dedede - Kirby's Dream Land
+</div>
+<audio id="pong-audio" src="pingpongtime.mp3" loop></audio>
+`;
+                setTimeout(() => {
+                    const canvas = document.getElementById('pong-canvas');
+                    const ctx = canvas.getContext('2d');
+                    // --- Pong game logic (idéntico al flujo original) ---
+                    function getGameSize() {
+                        return { w: canvas.width, h: canvas.height };
                     }
-                }, 16);
-            }
-        });
-        joystick.addEventListener('touchend', function() {
-            dragging = false;
-            stick.style.transition = '0.2s';
-            stick.style.transform = 'translate(0,0)';
-            clearInterval(moveInterval);
-            moveInterval = null;
-            dx = dy = 0;
-        });
+                    function resizeCanvas() {
+                        const rect = canvas.getBoundingClientRect();
+                        canvas.width = rect.width;
+                        canvas.height = rect.height;
+                    }
+                    resizeCanvas();
+                    window.addEventListener('resize', resizeCanvas);
 
-        // Joystick para mirar
-        let lookJoystick = document.getElementById('look-joystick');
-        let lookStick = document.getElementById('look-stick');
-        let lookDragging = false, lookStartX = 0, lookStartY = 0, lookDx = 0, lookDy = 0;
-        lookJoystick.addEventListener('touchstart', function(e) {
-            lookDragging = true;
-            let touch = e.touches[0];
-            lookStartX = touch.clientX;
-            lookStartY = touch.clientY;
-            lookStick.style.transition = 'none';
-        });
-        lookJoystick.addEventListener('touchmove', function(e) {
-            if (!lookDragging) return;
-            let touch = e.touches[0];
-            lookDx = touch.clientX - lookStartX;
-            lookDy = touch.clientY - lookStartY;
-            let dist = Math.sqrt(lookDx*lookDx + lookDy*lookDy);
-            if (dist > 40) {
-                lookDx = lookDx * 40 / dist;
-                lookDy = lookDy * 40 / dist;
-            }
-            lookStick.style.transform = `translate(${lookDx}px,${lookDy}px)`;
-            // Sensibilidad
-            cameraYaw -= lookDx * 0.005;
-            cameraPitch -= lookDy * 0.005;
-            cameraPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, cameraPitch));
-            updateCameraRotation();
-            lookStartX = touch.clientX;
-            lookStartY = touch.clientY;
-        });
-        lookJoystick.addEventListener('touchend', function() {
-            lookDragging = false;
-            lookStick.style.transition = '0.2s';
-            lookStick.style.transform = 'translate(0,0)';
-            lookDx = lookDy = 0;
-        });
-        // Mouse para mirar (opcional en PC)
-        let mouseLook = false, lastMouseX = 0, lastMouseY = 0;
-        document.addEventListener('mousedown', function(e) {
-            if (e.target === renderer.domElement) {
-                mouseLook = true;
-                lastMouseX = e.clientX;
-                lastMouseY = e.clientY;
-            }
-        });
-        document.addEventListener('mousemove', function(e) {
-            if (!mouseLook) return;
-            let dx = e.clientX - lastMouseX;
-            let dy = e.clientY - lastMouseY;
-            cameraYaw -= dx * 0.005;
-            cameraPitch -= dy * 0.005;
-            cameraPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, cameraPitch));
-            updateCameraRotation();
-            lastMouseX = e.clientX;
-            lastMouseY = e.clientY;
-        });
-        document.addEventListener('mouseup', function() { mouseLook = false; });
+                    function rel(val, axis) {
+                        const { w, h } = getGameSize();
+                        return axis === 'w' ? val * w : val * h;
+                    }
+                    function paddleW() { return rel(0.22, 'w'); }
+                    function paddleH() { return rel(0.025, 'h'); }
+                    function paddleMargin() { return rel(0.03, 'h'); }
+                    function ballSize() { return rel(0.035, 'w'); }
 
-        // Modificar controles para moverse en la dirección de la cámara
-        function getForwardVector() {
-            return new THREE.Vector3(-Math.sin(cameraYaw), 0, -Math.cos(cameraYaw));
-        }
-        function getRightVector() {
-            return new THREE.Vector3(Math.cos(cameraYaw), 0, -Math.sin(cameraYaw));
-        }
+                    let aiTimer = 15.0;
+                    let aiFrozen = false;
+                    let aiFreezeTimer = 0;
+                    let aiTimerLastUpdate = Date.now();
 
-        // Interacción con la puerta
-        document.addEventListener('keydown', function(event) {
-            if(event.key === 'e') {
-                if(Math.abs(camera.position.z + 9.75) < 2 && Math.abs(camera.position.x) < 2) {
-                    door.rotation.y -= Math.PI/2;
-                    setTimeout(()=>{
-                        alert('¡Has escapado!');
-                    }, 500);
-                }
+                    let player = { x: 0, y: 0, w: paddleW(), h: paddleH(), score: 0 };
+                    let ai = { x: 0, y: 0, w: paddleW(), h: paddleH(), score: 0 };
+                    let ball = { x: 0, y: 0, vx: 0, vy: 0, size: ballSize() };
+                    let running = false; // El juego inicia después del contador
+                    let touchX = null;
+
+                    let ballTrail = [];
+                    const BALL_TRAIL_LENGTH = 8;
+
+                    function resetPositions(servingToPlayer = false) {
+                        const { w, h } = getGameSize();
+                        player.w = paddleW(); player.h = paddleH();
+                        ai.w = paddleW(); ai.h = paddleH();
+                        player.x = w/2 - player.w/2;
+                        player.y = h - paddleMargin() - player.h;
+                        ai.x = w/2 - ai.w/2;
+                        ai.y = paddleMargin();
+                        ball.size = ballSize();
+                        ball.x = w/2 - ball.size/2;
+                        ball.y = h/2 - ball.size/2;
+                        let angle = (Math.random() * 0.5 - 0.25);
+                        let baseSpeed = rel(0.018, 'h');
+                        if (servingToPlayer) {
+                            ball.vy = -baseSpeed;
+                            ball.vx = angle * baseSpeed * 2;
+                        } else {
+                            ball.vy = baseSpeed;
+                            ball.vx = angle * baseSpeed * 2;
+                        }
+                        let speed = Math.sqrt(ball.vx*ball.vx + ball.vy*ball.vy);
+                        if (speed !== 0) {
+                            ball.vx *= baseSpeed/speed;
+                            ball.vy *= baseSpeed/speed;
+                        }
+                        aiTimerLastUpdate = Date.now();
+                        // Reinicia la estela cuando se reinicia la posición de la bola
+                        ballTrail = [];
+                    }
+
+                    function drawTable() {
+                        const { w, h } = getGameSize();
+                        ctx.save();
+                        ctx.fillStyle = "#2b4fa2";
+                        ctx.globalAlpha = 0.93;
+                        ctx.fillRect(rel(0.03, 'w'), rel(0.02, 'h'), w - rel(0.06, 'w'), h - rel(0.04, 'h'));
+                        ctx.globalAlpha = 1;
+                        ctx.strokeStyle = "#fff";
+                        ctx.lineWidth = rel(0.012, 'w');
+                        ctx.strokeRect(rel(0.03, 'w'), rel(0.02, 'h'), w - rel(0.06, 'w'), h - rel(0.04, 'h'));
+                        ctx.beginPath();
+                        ctx.moveTo(rel(0.03, 'w'), h/2);
+                        ctx.lineTo(w - rel(0.03, 'w'), h/2);
+                        ctx.setLineDash([rel(0.04, 'w'), rel(0.025, 'w')]);
+                        ctx.lineWidth = rel(0.008, 'w');
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.beginPath();
+                        ctx.strokeStyle = "#e0e0e0";
+                        ctx.lineWidth = rel(0.012, 'h');
+                        ctx.moveTo(rel(0.03, 'w'), h/2);
+                        ctx.lineTo(w - rel(0.03, 'w'), h/2);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+
+                    function drawScore() {
+                        const { w, h } = getGameSize();
+                        ctx.font = `bold ${rel(0.08, 'w')}px 'Montserrat', Arial, sans-serif`;
+                        ctx.textAlign = "center";
+                        ctx.fillStyle = "#ffe44d";
+                        ctx.shadowColor = "#178a2c";
+                        ctx.shadowBlur = 8;
+                        ctx.fillText(player.score, w/2, h - rel(0.07, 'h'));
+                        ctx.fillText(ai.score, w/2, rel(0.11, 'h'));
+                        ctx.shadowBlur = 0;
+                    }
+
+                    function drawPaddle(p, isPlayer) {
+                        const ctx = canvas.getContext('2d');
+                        ctx.save();
+                        if (isPlayer) {
+                            ctx.fillStyle = "#ffe44d";
+                            ctx.shadowColor = "#178a2c";
+                            ctx.shadowBlur = 8;
+                            ctx.fillRect(p.x, p.y, p.w, p.h);
+                        } else {
+                            // Cambia a gris si la IA está paralizada
+                            ctx.fillStyle = aiFrozen ? "#b0b0b0" : "#fff";
+                            ctx.shadowColor = "#2b4fa2";
+                            ctx.shadowBlur = 4;
+                            ctx.fillRect(p.x, p.y, p.w, p.h);
+                        }
+                        ctx.restore();
+                    }
+
+                    function drawAITimer() {
+                        const { w } = getGameSize();
+                        ctx.save();
+                        ctx.font = `bold ${rel(0.06, 'w')}px 'Montserrat', Arial, sans-serif`;
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "top";
+                        // Cambia a gris si la IA está paralizada
+                        let color = aiFrozen ? "#b0b0b0" : "#fff";
+                        let timerValue = aiFrozen ? aiFreezeTimer : aiTimer;
+                        let timerText = timerValue.toFixed(1);
+                        const timerX = ai.x + ai.w/2;
+                        const timerY = ai.y + ai.h + rel(0.012, 'h');
+                        ctx.fillStyle = color;
+                        ctx.shadowColor = "#178a2c";
+                        ctx.shadowBlur = 8;
+                        ctx.fillText(timerText, timerX, timerY);
+                        ctx.restore();
+                    }
+
+                    function drawBall() {
+                        // Agrega la posición actual al inicio del trail
+                        ballTrail.unshift({ x: ball.x, y: ball.y });
+                        if (ballTrail.length > BALL_TRAIL_LENGTH) ballTrail.pop();
+                        // Dibuja la estela amarillo #ffe44d
+                        for (let i = ballTrail.length - 1; i >= 0; i--) {
+                            ctx.save();
+                            let t = i / BALL_TRAIL_LENGTH;
+                            let alpha = 0.18 + 0.22 * t;
+                            ctx.globalAlpha = alpha;
+                            ctx.fillStyle = '#ffe44d';
+                            ctx.shadowColor = '#ffe44d';
+                            ctx.shadowBlur = 16 * t;
+                            ctx.beginPath();
+                            ctx.arc(ballTrail[i].x + ball.size/2, ballTrail[i].y + ball.size/2, ball.size/2, 0, 2*Math.PI);
+                            ctx.fill();
+                            ctx.restore();
+                        }
+                        // Dibuja la bola principal
+                        ctx.save();
+                        ctx.globalAlpha = 1;
+                        ctx.fillStyle = "#fff";
+                        ctx.shadowColor = "#ffe44d";
+                        ctx.shadowBlur = 8;
+                        ctx.beginPath();
+                        ctx.arc(ball.x + ball.size/2, ball.y + ball.size/2, ball.size/2, 0, 2*Math.PI);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+
+                    function draw() {
+                        const { w, h } = getGameSize();
+                        ctx.clearRect(0, 0, w, h);
+                        drawTable();
+                        drawScore();
+                        drawPaddle(player, true);
+                        drawPaddle(ai, false);
+                        drawBall();
+                        drawAITimer();
+                    }
+
+                    function clamp(val, min, max) {
+                        return Math.max(min, Math.min(max, val));
+                    }
+
+                    function handleMoveFromCanvas(x) {
+                        const { w } = getGameSize();
+                        player.x = clamp(x - player.w/2, rel(0.03, 'w'), w - rel(0.03, 'w') - player.w);
+                    }
+                    function getCanvasRelativeX(e) {
+                        const rect = canvas.getBoundingClientRect();
+                        if (e.touches && e.touches.length > 0) {
+                            return (e.touches[0].clientX - rect.left) * (canvas.width / rect.width);
+                        } else if (typeof e.clientX === "number") {
+                            return (e.clientX - rect.left) * (canvas.width / rect.width);
+                        }
+                        return 0;
+                    }
+                    canvas.addEventListener('touchstart', function(e) {
+                        handleMoveFromCanvas(getCanvasRelativeX(e));
+                        e.preventDefault();
+                    });
+                    canvas.addEventListener('touchmove', function(e) {
+                        handleMoveFromCanvas(getCanvasRelativeX(e));
+                        e.preventDefault();
+                    });
+                    canvas.addEventListener('mousedown', function(e) {
+                        handleMoveFromCanvas(getCanvasRelativeX(e));
+                        touchX = true;
+                    });
+                    canvas.addEventListener('mousemove', function(e) {
+                        if (touchX) {
+                            handleMoveFromCanvas(getCanvasRelativeX(e));
+                        }
+                    });
+                    canvas.addEventListener('mouseup', function() {
+                        touchX = null;
+                    });
+                    canvas.addEventListener('mouseleave', function() {
+                        touchX = null;
+                    });
+
+                    function aiMove() {
+                        if (aiFrozen) return;
+                        const { w } = getGameSize();
+                        let center = ai.x + ai.w/2;
+                        let target = ball.x + ball.size/2;
+                        let dx = target - center;
+                        ai.x += dx;
+                        ai.x = clamp(ai.x, rel(0.03, 'w'), w - rel(0.03, 'w') - ai.w);
+                    }
+
+                    function updateAITimer(dt) {
+                        if (!aiFrozen) {
+                            aiTimer -= dt;
+                            if (aiTimer <= 0) {
+                                aiFrozen = true;
+                                aiFreezeTimer = 3.0;
+                                aiTimer = 0;
+                            }
+                        } else {
+                            aiFreezeTimer -= dt;
+                            if (aiFreezeTimer <= 0) {
+                                aiFrozen = false;
+                                aiTimer = 15.0;
+                                aiFreezeTimer = 0;
+                            }
+                        }
+                    }
+
+                    function update() {
+                        const { w, h } = getGameSize();
+                        let now = Date.now();
+                        let dt = (now - aiTimerLastUpdate) / 1000;
+                        aiTimerLastUpdate = now;
+                        if (running) updateAITimer(dt);
+
+                        ball.x += ball.vx;
+                        ball.y += ball.vy;
+
+                        if (ball.x < 0) {
+                            ball.x = 0; ball.vx *= -1;
+                        }
+                        if (ball.x + ball.size > w) {
+                            ball.x = w - ball.size; ball.vx *= -1;
+                        }
+
+                        if (
+                            ball.y + ball.size >= player.y &&
+                            ball.y + ball.size <= player.y + player.h + rel(0.01, 'h') &&
+                            ball.x + ball.size > player.x &&
+                            ball.x < player.x + player.w &&
+                            ball.vy > 0
+                        ) {
+                            ball.y = player.y - ball.size;
+                            ball.vy *= -1;
+                            let hit = ((ball.x + ball.size/2) - (player.x + player.w/2)) / (player.w/2);
+                            ball.vx += hit * rel(0.006, 'w');
+                            let baseSpeed = rel(0.018, 'h');
+                            let speed = Math.sqrt(ball.vx*ball.vx + ball.vy*ball.vy);
+                            if (speed !== 0) {
+                                ball.vx *= baseSpeed/speed;
+                                ball.vy *= baseSpeed/speed;
+                            }
+                        }
+                        if (
+                            ball.y <= ai.y + ai.h &&
+                            ball.y >= ai.y - rel(0.01, 'h') &&
+                            ball.x + ball.size > ai.x &&
+                            ball.x < ai.x + ai.w &&
+                            ball.vy < 0
+                        ) {
+                            ball.y = ai.y + ai.h;
+                            ball.vy *= -1;
+                            let hit = ((ball.x + ball.size/2) - (ai.x + ai.w/2)) / (ai.w/2);
+                            ball.vx += hit * rel(0.006, 'w');
+                            let baseSpeed = rel(0.018, 'h');
+                            let speed = Math.sqrt(ball.vx*ball.vx + ball.vy*ball.vy);
+                            if (speed !== 0) {
+                                ball.vx *= baseSpeed/speed;
+                                ball.vy *= baseSpeed/speed;
+                            }
+                        }
+
+                        if (ball.y < 0) {
+                            player.score++;
+                            if (player.score >= 5) {
+                                running = false;
+                                setTimeout(() => showEndScreen(true), 700);
+                            } else {
+                                resetPositions(false);
+                            }
+                        }
+                        if (ball.y + ball.size > getGameSize().h) {
+                            ai.score++;
+                            if (ai.score >= 5) {
+                                running = false;
+                                setTimeout(() => showEndScreen(false), 700);
+                            } else {
+                                resetPositions(true);
+                            }
+                        }
+                    }
+
+                    function gameLoop() {
+                        draw();
+                        if (running) {
+                            aiMove();
+                            update();
+                        }
+                        requestAnimationFrame(gameLoop);
+                    }
+
+                    function showEndScreen(playerWon) {
+                        const pongContainer = document.getElementById('pong-container');
+                        // Detener la música al finalizar el juego
+                        const audio = document.getElementById('pong-audio');
+                        if (audio) {
+                            audio.pause();
+                            audio.currentTime = 0;
+                        }
+                        let html = '';
+                        if (playerWon) {
+                            // Dialog box with background, image, title, text and button
+                            html = `
+                                <div class="arbol-chan-container" id="pong-end" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:10;background:url('Fondo texto.jpg') no-repeat center center;background-size:cover;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+                                    <div class="arbol-chan-content" style="background:none;box-shadow:none;">
+                                        <img src="DonArbolito.png" class="arbol-chan-img" alt="Don Árbol" style="opacity:1;transform:none;margin-bottom:0.7rem;" />
+                                        <div class="arbol-chan-titulo" style="color:#178a2c;margin-bottom:0.7rem;">Don Árbolito</div>
+                                        <div class="arbol-chan-texto" style="color:#fff;">
+                                            ¡Excelente desempeño, noble usuario!<br>
+                                            Ha demostrado valor y precisión.<br><br>
+                                            Como prometí, le concederé una pista, la cual que es una foto tomada en este parque.<br><br>
+                                            Busca el lugar, observa con atención... y encuentra el código.<br>
+                                            Y recuerde nunca rendirse.
+                                        </div>
+                                        <button id="pong-show-clue" class="btn-continuar" style="margin-top:1.2rem;">Ver pista</button>
+                                    </div>
+                                </div>
+                            `;
+                            pongContainer.insertAdjacentHTML('beforeend', html);
+                            document.getElementById('pong-show-clue').onclick = function() {
+                                // Replace dialog with the clue
+                                document.getElementById('pong-end').innerHTML = `
+                                    <h2 style="margin-top:0;">Siguiente pista</h2>
+                                    <div id="pong-next-img" style="margin:0; padding:0;">
+                                        <img src="gym.jpeg" alt="Pista" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:12px 12px 12px 12px;">
+                                    </div>
+                                    <button id="pong-continue" style="font-size:1.3rem;background:#178a2c;color:#fff;border:2px solid #fff;border-radius:8px;padding:0.7rem 2.5rem;font-weight:bold;font-family:'Montserrat',Arial,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.12);cursor:pointer;margin-top:1.5rem;margin-bottom:2rem;">Continuar</button>
+                                `;
+                                document.getElementById('pong-continue').onclick = function() {
+                                    window.location.href = "https://danjua77.github.io/Sagrado.Puzzle/";
+                                };
+                            };
+                        } else {
+                            html = `
+                                <div id="pong-end">
+                                    <img src="DonArbolito.png" class="arbol-img" alt="Don Árbol" />
+                                    <h2>Qué desafortunado...</h2>
+                                    <button id="pong-retry">Continuar</button>
+                                </div>
+                            `;
+                            pongContainer.insertAdjacentHTML('beforeend', html);
+                            document.getElementById('pong-retry').onclick = function() {
+                                location.reload();
+                            };
+                        }
+                    }
+
+                    function updateSizes() {
+                        resetPositions();
+                    }
+                    window.addEventListener('resize', function() {
+                        updateSizes();
+                    });
+
+                    player.score = 0; ai.score = 0;
+                    aiTimer = 15.0;
+                    aiFrozen = false;
+                    aiFreezeTimer = 0;
+                    resetPositions(false);
+
+                    // --- Contador de 3 a 1 ---
+                    let countdown = 3;
+                    const updateCountdown = () => {
+                        const numElem = document.getElementById('pong-countdown-num');
+                        if (numElem) numElem.textContent = countdown > 0 ? countdown : "";
+                    };
+                    updateCountdown();
+
+                    // Inicia la música apenas inicia el contador
+                    const audio = document.getElementById('pong-audio');
+                    if (audio) {
+                        audio.currentTime = 0;
+                        audio.play().catch(()=>{});
+                        // Asegura que la música se repita aunque falle el atributo loop
+                        audio.addEventListener('ended', function() {
+                            audio.currentTime = 0;
+                            audio.play().catch(()=>{});
+                        });
+                    }
+
+                    const countdownInterval = setInterval(() => {
+                        countdown--;
+                        updateCountdown();
+                        if (countdown === 0) {
+                            clearInterval(countdownInterval);
+                            // Oculta el contador y arranca el juego
+                            const countdownDiv = document.getElementById('pong-countdown');
+                            if (countdownDiv) countdownDiv.style.display = 'none';
+                            running = true;
+                        }
+                    }, 1000);
+
+                    gameLoop();
+                }, 10);
             }
         });
     </script>
