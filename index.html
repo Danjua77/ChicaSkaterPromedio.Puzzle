@@ -285,6 +285,21 @@
             background: #176d13;
             border: 2px solid #ffe44d;
         }
+        .fade-img.flash-green {
+            box-shadow: 0 0 64px 32px #00ff00f6, 0 0 128px 64px #00ff00cc;
+            transition: box-shadow 0.13s;
+            z-index: 2;
+        }
+        .fade-img.flash-yellow {
+            box-shadow: 0 0 64px 32px #ffe44df6, 0 0 128px 64px #ffe44dcc;
+            transition: box-shadow 0.13s;
+            z-index: 2;
+        }
+        .fade-img.flash-red {
+            box-shadow: 0 0 64px 32px #ff3333f6, 0 0 128px 64px #ff3333cc;
+            transition: box-shadow 0.13s;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
@@ -421,6 +436,21 @@
         background: #176d13;
         border: 2px solid #ffe44d;
     }
+    .fade-img.flash-green {
+        box-shadow: 0 0 64px 32px #00ff00f6, 0 0 128px 64px #00ff00cc;
+        transition: box-shadow 0.13s;
+        z-index: 2;
+    }
+    .fade-img.flash-yellow {
+        box-shadow: 0 0 64px 32px #ffe44df6, 0 0 128px 64px #ffe44dcc;
+        transition: box-shadow 0.13s;
+        z-index: 2;
+    }
+    .fade-img.flash-red {
+        box-shadow: 0 0 64px 32px #ff3333f6, 0 0 128px 64px #ff3333cc;
+        transition: box-shadow 0.13s;
+        z-index: 2;
+    }
 </style>
 <div class="container">
     <div id="level">Nivel: 1/???</div>
@@ -436,6 +466,11 @@
                 let userStep = 0;
                 let level = 1;
                 let acceptingInput = false;
+                // Música de fondo
+                let gameMusic = new Audio('fainalbus.mp3');
+                gameMusic.loop = true;
+                gameMusic.volume = 0.7;
+                gameMusic.play();
 
                 function getColorClass(level) {
                     if (level <= 2) return 'active-green';
@@ -474,16 +509,31 @@
                     const interval = setInterval(() => {
                         if (i > 0) {
                             if (isFade) {
+                                const prevFadeImg = board.children[sequence[i-1]].querySelector('.fade-img');
                                 board.children[sequence[i-1]].classList.remove('show-green','show-yellow','show-red');
+                                prevFadeImg.classList.remove('flash-green','flash-yellow','flash-red');
                             } else {
                                 board.children[sequence[i-1]].classList.remove(colorClass);
                             }
                         }
                         if (i < sequence.length) {
                             if (isFade) {
-                                if (level <= 2) board.children[sequence[i]].classList.add('show-green');
-                                else if (level <= 4) board.children[sequence[i]].classList.add('show-yellow');
-                                else board.children[sequence[i]].classList.add('show-red');
+                                let flashClass = '';
+                                if (level <= 2) {
+                                    board.children[sequence[i]].classList.add('show-green');
+                                    flashClass = 'flash-green';
+                                } else if (level <= 4) {
+                                    board.children[sequence[i]].classList.add('show-yellow');
+                                    flashClass = 'flash-yellow';
+                                } else {
+                                    board.children[sequence[i]].classList.add('show-red');
+                                    flashClass = 'flash-red';
+                                }
+                                const fadeImg = board.children[sequence[i]].querySelector('.fade-img');
+                                fadeImg.classList.add(flashClass);
+                                setTimeout(() => {
+                                    fadeImg.classList.remove(flashClass);
+                                }, 180);
                             } else {
                                 board.children[sequence[i]].classList.add(colorClass);
                             }
@@ -494,6 +544,7 @@
                                 board.querySelectorAll('.square').forEach(sq => {
                                     sq.classList.remove('show-green','show-yellow','show-red');
                                     sq.classList.remove('active-green','active-blue','active-purple');
+                                    sq.querySelector('.fade-img').classList.remove('flash-green','flash-yellow','flash-red');
                                 });
                                 acceptingInput = true;
                                 userStep = 0;
@@ -527,6 +578,8 @@
                         if (userStep === sequence.length) {
                             level++;
                             if (level > 6) {
+                                // Detener música al ganar
+                                if (gameMusic) { gameMusic.pause(); gameMusic.currentTime = 0; gameMusic = null; }
                                 mostrarPistaFinal();
                                 return;
                             }
@@ -534,6 +587,8 @@
                             setTimeout(startLevel, 800);
                         }
                     } else {
+                        // Detener música al perder
+                        if (gameMusic) { gameMusic.pause(); gameMusic.currentTime = 0; gameMusic = null; }
                         alert('¡Fallaste! Intenta de nuevo.');
                         level = 1;
                         levelDisplay.textContent = 'Nivel: ' + level + '/???';
