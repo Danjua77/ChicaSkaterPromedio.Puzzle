@@ -240,8 +240,9 @@
             background: url('azul.png') center center no-repeat;
             background-size: contain;
             border-radius: 12px;
-            box-shadow: 0 2px 12px #178a2c33;
-            transition: box-shadow 0.2s, filter 0.2s;
+            box-shadow: none !important;
+            border: none !important;
+            transition: filter 0.2s;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -314,6 +315,21 @@
             box-shadow: 0 0 64px 32px #ff3333f6, 0 0 128px 64px #ff3333cc;
             transition: box-shadow 0.13s;
             z-index: 2;
+        }
+        .ost-footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            text-align: center;
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'Montserrat', Arial, sans-serif;
+            z-index: 100;
+            padding: 0.5em 0 0.7em 0;
+            pointer-events: none;
+            user-select: none;
         }
     </style>
 </head>
@@ -405,8 +421,9 @@
         background: url('azul.png') center center no-repeat;
         background-size: contain;
         border-radius: 12px;
-        box-shadow: 0 2px 12px #178a2c33;
-        transition: box-shadow 0.2s, filter 0.2s;
+        box-shadow: none !important;
+        border: none !important;
+        transition: filter 0.2s;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -480,6 +497,21 @@
         transition: box-shadow 0.13s;
         z-index: 2;
     }
+    .ost-footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        text-align: center;
+        color: #fff;
+        font-size: 1rem;
+        font-family: 'Montserrat', Arial, sans-serif;
+        z-index: 100;
+        padding: 0.5em 0 0.7em 0;
+        pointer-events: none;
+        user-select: none;
+    }
 </style>
 <div class="memory-bg-fade" id="memory-bg-fade"></div>
 <div class="container">
@@ -487,6 +519,7 @@
     <div id="game-board"></div>
     <button id="start-btn">Comenzar</button>
 </div>
+<div class="ost-footer">OST: "Level !" But It's Actually a Soundtrack REMASTERED(1 hour loop) - Dapper Husky</div>
 `;
                 // Lógica del juego de memoria directamente aquí
                 const board = document.getElementById('game-board');
