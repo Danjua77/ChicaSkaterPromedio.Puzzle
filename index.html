@@ -559,7 +559,9 @@
 
                 function nextSequence() {
                     sequence = [];
-                    for (let i = 0; i < level + 2; i++) {
+                    // Secuencia 10% más fácil
+                    let seqLen = Math.max(1, Math.floor((level + 2) * 0.9));
+                    for (let i = 0; i < seqLen; i++) {
                         sequence.push(Math.floor(Math.random() * 16));
                     }
                 }
@@ -639,6 +641,9 @@
                         }
                         userStep++;
                         if (userStep === sequence.length) {
+                            // Sonido de pasar nivel
+                            const okSound = new Audio('ok.mp3');
+                            okSound.play();
                             level++;
                             if (level > 6) {
                                 // Detener música al ganar
@@ -677,6 +682,7 @@
                 }
 
                 startBtn.addEventListener('click', () => {
+                    startBtn.style.display = "none";
                     level = 1;
                     levelDisplay.textContent = 'Nivel: ' + level + '/???';
                     startLevel();
