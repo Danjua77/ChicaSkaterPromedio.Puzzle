@@ -572,35 +572,41 @@
                     const colorClass = getColorClass(level);
                     const isFade = (level <= 6);
                     const interval = setInterval(() => {
+                        // Siempre limpiar el efecto anterior, incluso si es el mismo cuadrado
                         if (i > 0) {
+                            const prevIdx = sequence[i-1];
                             if (isFade) {
-                                const prevFadeImg = board.children[sequence[i-1]].querySelector('.fade-img');
-                                board.children[sequence[i-1]].classList.remove('show-green','show-yellow','show-red');
+                                const prevFadeImg = board.children[prevIdx].querySelector('.fade-img');
+                                board.children[prevIdx].classList.remove('show-green','show-yellow','show-red');
                                 prevFadeImg.classList.remove('flash-green','flash-yellow','flash-red');
                             } else {
-                                board.children[sequence[i-1]].classList.remove(colorClass);
+                                board.children[prevIdx].classList.remove(colorClass);
                             }
                         }
                         if (i < sequence.length) {
+                            const currIdx = sequence[i];
                             if (isFade) {
                                 let flashClass = '';
                                 if (level <= 2) {
-                                    board.children[sequence[i]].classList.add('show-green');
+                                    board.children[currIdx].classList.add('show-green');
                                     flashClass = 'flash-green';
                                 } else if (level <= 4) {
-                                    board.children[sequence[i]].classList.add('show-yellow');
+                                    board.children[currIdx].classList.add('show-yellow');
                                     flashClass = 'flash-yellow';
                                 } else {
-                                    board.children[sequence[i]].classList.add('show-red');
+                                    board.children[currIdx].classList.add('show-red');
                                     flashClass = 'flash-red';
                                 }
-                                const fadeImg = board.children[sequence[i]].querySelector('.fade-img');
+                                const fadeImg = board.children[currIdx].querySelector('.fade-img');
+                                // Reinicia el flash aunque sea el mismo cuadrado
+                                fadeImg.classList.remove('flash-green','flash-yellow','flash-red');
+                                void fadeImg.offsetWidth; // Trigger reflow para reiniciar animación
                                 fadeImg.classList.add(flashClass);
                                 setTimeout(() => {
                                     fadeImg.classList.remove(flashClass);
                                 }, 180);
                             } else {
-                                board.children[sequence[i]].classList.add(colorClass);
+                                board.children[currIdx].classList.add(colorClass);
                             }
                             i++;
                         } else {
@@ -715,44 +721,161 @@
                 function mostrarPistaFinal() {
                     document.body.innerHTML = `
                         <div class='arbol-chan-container' id='pong-end' style='position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:10;background:url(Fondo texto.jpg) no-repeat center center;background-size:cover;display:flex;flex-direction:column;justify-content:center;align-items:center;'>
+                            <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:100;"></canvas>
                             <div class='arbol-chan-content' style='background:none;box-shadow:none;'>
-                                <div style="display:flex;align-items:flex-end;justify-content:center;gap:2vw;margin-bottom:1.2rem;">
-                                    <img src='DonArbolito.png' class='arbol-chan-img' alt='Don Árbol' style='opacity:1;transform:none;height:90px;width:auto;margin-bottom:0;' />
-                                    <img src='gymbro.png' class='arbol-chan-img' alt='Gym Bro' style='opacity:1;transform:none;height:90px;width:auto;margin-bottom:0;' />
-                                    <img src='promedio.png' class='arbol-chan-img' alt='Promedio' style='opacity:1;transform:none;height:90px;width:auto;margin-bottom:0;' />
-                                    <img src='abuelo.sama.png' class='arbol-chan-img' alt='Abuelo Sama' style='opacity:1;transform:none;height:90px;width:auto;margin-bottom:0;' />
-                                    <img src='parrishiguana.png' class='arbol-chan-img' alt='Parris Higuana' style='opacity:1;transform:none;height:90px;width:auto;margin-bottom:0;' />
-                                </div>
-                                <div class='arbol-chan-titulo' style='color:#178a2c;margin-bottom:0.7rem;'>Felicidades!</div>
+                                <div class='arbol-chan-titulo' style='color:#178a2c;margin-bottom:0.7rem;font-size:3rem;'>Felicidades!</div>
                                 <div class='arbol-chan-texto' style='color:#fff;'></div>
                                 <button id='pong-show-clue' class='btn-continuar' style='margin-top:1.2rem;'>Ver pista</button>
                             </div>
                         </div>
                     `;
+                    // Reproducir sonido especial una sola vez
+                    const winSound = new Audio('..mp3');
+                    winSound.play();
+                    // Confetti animation
+                    (function confetti() {
+                        const canvas = document.getElementById('confetti-canvas');
+                        const ctx = canvas.getContext('2d');
+                        let W = window.innerWidth, H = window.innerHeight;
+                        canvas.width = W;
+                        canvas.height = H;
+                        let particles = [];
+                        let colors = ['#ffe44d','#3ec46d','#178a2c','#ff3333','#ffe44d','#3e7ec4','#a23ec4'];
+                        for(let i=0;i<120;i++){
+                            particles.push({
+                                x: Math.random()*W,
+                                y: Math.random()*-H,
+                                r: 6+Math.random()*8,
+                                d: 10+Math.random()*20,
+                                color: colors[Math.floor(Math.random()*colors.length)],
+                                tilt: Math.random()*10-10,
+                                tiltAngle: 0,
+                                tiltAngleIncremental: (Math.random()*0.07)+.05
+                            });
+                        }
+                        function draw(){
+                            ctx.clearRect(0,0,W,H);
+                            for(let i=0;i<particles.length;i++){
+                                let p=particles[i];
+                                ctx.beginPath();
+                                ctx.lineWidth = p.r;
+                                ctx.strokeStyle = p.color;
+                                ctx.moveTo(p.x + p.tilt + p.r/3, p.y);
+                                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.d/2);
+                                ctx.stroke();
+                            }
+                            update();
+                        }
+                        function update(){
+                            for(let i=0;i<particles.length;i++){
+                                let p=particles[i];
+                                p.y += (Math.cos(p.d)+3+ p.r/2)/2;
+                                p.x += Math.sin(0.01*p.d);
+                                p.tiltAngle += p.tiltAngleIncremental;
+                                p.tilt = Math.sin(p.tiltAngle- (i%3)) * 15;
+                                if(p.y > H){
+                                    p.x = Math.random()*W;
+                                    p.y = -10;
+                                }
+                            }
+                        }
+                        function loop(){
+                            draw();
+                            requestAnimationFrame(loop);
+                        }
+                        loop();
+                        window.addEventListener('resize',()=>{
+                            W = window.innerWidth; H = window.innerHeight;
+                            canvas.width = W; canvas.height = H;
+                        });
+                    })();
                     document.getElementById('pong-show-clue').onclick = function() {
                         document.getElementById('pong-end').innerHTML = `
                             <h2 style='margin-top:0;'>Esta es la ubicación del caché.</h2>
-                            <div id='pong-next-img' style='margin:0; padding:0; position:relative; display:flex; align-items:center; justify-content:center;'>
-                                <button id='prev-carrusel' style='position:absolute;left:0;z-index:2;background:rgba(0,0,0,0.3);color:#fff;border:none;font-size:2rem;height:100%;width:40px;cursor:pointer;border-radius:12px 0 0 12px;'>‹</button>
-                                <img id='carrusel-img' src='pista1.jpeg' alt='Pista' style='width:100%;height:100%;object-fit:cover;display:block;border-radius:12px;max-width:300px;max-height:180px;min-width:120px;' />
-                                <button id='next-carrusel' style='position:absolute;right:0;z-index:2;background:rgba(0,0,0,0.3);color:#fff;border:none;font-size:2rem;height:100%;width:40px;cursor:pointer;border-radius:0 12px 12px 0;'>›</button>
+                            <div id='pong-next-img' style='margin:0; padding:0; position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden; width:100%; max-width:300px; height:180px; border-radius:12px; background:#fff;'>
+                                <div id='carrusel-track' style='display:flex;transition:transform 0.35s cubic-bezier(.77,0,.18,1);height:100%;width:100%;touch-action:pan-x;'>
+                                    <img src='pista1.jpeg' class='carrusel-img' style='width:100%;height:100%;object-fit:cover;flex:0 0 100%;max-width:300px;max-height:180px;min-width:120px;border-radius:12px;' />
+                                    <img src='pista2.jpeg' class='carrusel-img' style='width:100%;height:100%;object-fit:cover;flex:0 0 100%;max-width:300px;max-height:180px;min-width:120px;border-radius:12px;' />
+                                    <img src='pista3.jpeg' class='carrusel-img' style='width:100%;height:100%;object-fit:cover;flex:0 0 100%;max-width:300px;max-height:180px;min-width:120px;border-radius:12px;' />
+                                    <img src='pista4.jpeg' class='carrusel-img' style='width:100%;height:100%;object-fit:cover;flex:0 0 100%;max-width:300px;max-height:180px;min-width:120px;border-radius:12px;' />
+                                </div>
                             </div>
                             <button id='pong-continue' style='font-size:1.3rem;background:#178a2c;color:#fff;border:2px solid #fff;border-radius:8px;padding:0.7rem 2.5rem;font-weight:bold;font-family:Montserrat,Arial,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.12);cursor:pointer;margin-top:1.5rem;margin-bottom:2rem;'>Continuar</button>
                         `;
                         document.getElementById('pong-continue').onclick = function() {
                             window.location.href = 'https://danjua77.github.io/Sagrado.Puzzle/';
                         };
-                        const carruselImgs = ['pista1.jpeg','pista2.jpeg','pista3.jpeg','pista4.jpeg'];
-                        let carruselIdx = 0;
-                        const carruselImg = document.getElementById('carrusel-img');
-                        document.getElementById('prev-carrusel').onclick = function() {
-                            carruselIdx = (carruselIdx - 1 + carruselImgs.length) % carruselImgs.length;
-                            carruselImg.src = carruselImgs[carruselIdx];
-                        };
-                        document.getElementById('next-carrusel').onclick = function() {
-                            carruselIdx = (carruselIdx + 1) % carruselImgs.length;
-                            carruselImg.src = carruselImgs[carruselIdx];
-                        };
+                        // Carrusel tipo Instagram (swipe)
+                        const track = document.getElementById('carrusel-track');
+                        const total = 4;
+                        let idx = 0;
+                        let startX = 0;
+                        let currentX = 0;
+                        let dragging = false;
+                        let animating = false;
+                        function setIndex(newIdx) {
+                            idx = Math.max(0, Math.min(total-1, newIdx));
+                            track.style.transform = `translateX(${-idx*100}%)`;
+                        }
+                        // Touch events
+                        track.addEventListener('touchstart', function(e) {
+                            if (animating) return;
+                            dragging = true;
+                            startX = e.touches[0].clientX;
+                            currentX = startX;
+                            track.style.transition = 'none';
+                        });
+                        track.addEventListener('touchmove', function(e) {
+                            if (!dragging) return;
+                            currentX = e.touches[0].clientX;
+                            const dx = currentX - startX;
+                            track.style.transform = `translateX(${-idx*100 + dx/track.offsetWidth*100}%)`;
+                        });
+                        track.addEventListener('touchend', function(e) {
+                            if (!dragging) return;
+                            dragging = false;
+                            track.style.transition = 'transform 0.35s cubic-bezier(.77,0,.18,1)';
+                            const dx = currentX - startX;
+                            if (dx > 40 && idx > 0) {
+                                setIndex(idx-1);
+                            } else if (dx < -40 && idx < total-1) {
+                                setIndex(idx+1);
+                            } else {
+                                setIndex(idx);
+                            }
+                        });
+                        // Mouse events para desktop
+                        let mouseDown = false;
+                        track.addEventListener('mousedown', function(e) {
+                            if (animating) return;
+                            mouseDown = true;
+                            dragging = true;
+                            startX = e.clientX;
+                            currentX = startX;
+                            track.style.transition = 'none';
+                            e.preventDefault();
+                        });
+                        window.addEventListener('mousemove', function(e) {
+                            if (!mouseDown) return;
+                            currentX = e.clientX;
+                            const dx = currentX - startX;
+                            track.style.transform = `translateX(${-idx*100 + dx/track.offsetWidth*100}%)`;
+                        });
+                        window.addEventListener('mouseup', function(e) {
+                            if (!mouseDown) return;
+                            mouseDown = false;
+                            dragging = false;
+                            track.style.transition = 'transform 0.35s cubic-bezier(.77,0,.18,1)';
+                            const dx = currentX - startX;
+                            if (dx > 40 && idx > 0) {
+                                setIndex(idx-1);
+                            } else if (dx < -40 && idx < total-1) {
+                                setIndex(idx+1);
+                            } else {
+                                setIndex(idx);
+                            }
+                        });
+                        setIndex(0);
                     };
                 }
             }
