@@ -677,28 +677,42 @@
                     document.body.innerHTML = `
                         <div class='arbol-chan-container' id='pong-end' style='position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:10;background:url(Fondo texto.jpg) no-repeat center center;background-size:cover;display:flex;flex-direction:column;justify-content:center;align-items:center;'>
                             <div class='arbol-chan-content' style='background:none;box-shadow:none;'>
-                                <img src='promedio.png' class='arbol-chan-img' alt='Don Árbol' style='opacity:1;transform:none;margin-bottom:0.7rem;' />
-                                <div class='arbol-chan-titulo' style='color:#178a2c;margin-bottom:0.7rem;'>Don Árbolito</div>
-                                <div class='arbol-chan-texto' style='color:#fff;'>
-                                    ¡Excelente memoria, noble usuario!<br>
-                                    Como prometí, le concederé una pista, la cual que es una foto tomada en este parque.<br><br>
-                                    Busca el lugar, observa con atención... y encuentra el código.<br>
-                                    Y recuerde nunca rendirse.
+                                <div style="display:flex;align-items:flex-end;justify-content:center;gap:2vw;margin-bottom:1.2rem;">
+                                    <img src='DonArbolito.png' class='arbol-chan-img' alt='Don Árbol' style='opacity:1;transform:none;height:90px;width:auto;margin-bottom:0;' />
+                                    <img src='gymbro.png' class='arbol-chan-img' alt='Gym Bro' style='opacity:1;transform:none;height:90px;width:auto;margin-bottom:0;' />
+                                    <img src='promedio.png' class='arbol-chan-img' alt='Promedio' style='opacity:1;transform:none;height:90px;width:auto;margin-bottom:0;' />
+                                    <img src='abuelo.sama.png' class='arbol-chan-img' alt='Abuelo Sama' style='opacity:1;transform:none;height:90px;width:auto;margin-bottom:0;' />
+                                    <img src='parrishiguana.png' class='arbol-chan-img' alt='Parris Higuana' style='opacity:1;transform:none;height:90px;width:auto;margin-bottom:0;' />
                                 </div>
+                                <div class='arbol-chan-titulo' style='color:#178a2c;margin-bottom:0.7rem;'>Felicidades!</div>
+                                <div class='arbol-chan-texto' style='color:#fff;'></div>
                                 <button id='pong-show-clue' class='btn-continuar' style='margin-top:1.2rem;'>Ver pista</button>
                             </div>
                         </div>
                     `;
                     document.getElementById('pong-show-clue').onclick = function() {
                         document.getElementById('pong-end').innerHTML = `
-                            <h2 style='margin-top:0;'>Siguiente pista</h2>
-                            <div id='pong-next-img' style='margin:0; padding:0;'>
-                                <img src='gym.jpeg' alt='Pista' style='width:100%;height:100%;object-fit:cover;display:block;border-radius:12px 12px 12px 12px;'>
+                            <h2 style='margin-top:0;'>Esta es la ubicación del caché.</h2>
+                            <div id='pong-next-img' style='margin:0; padding:0; position:relative; display:flex; align-items:center; justify-content:center;'>
+                                <button id='prev-carrusel' style='position:absolute;left:0;z-index:2;background:rgba(0,0,0,0.3);color:#fff;border:none;font-size:2rem;height:100%;width:40px;cursor:pointer;border-radius:12px 0 0 12px;'>‹</button>
+                                <img id='carrusel-img' src='pista1.jpeg' alt='Pista' style='width:100%;height:100%;object-fit:cover;display:block;border-radius:12px;max-width:300px;max-height:180px;min-width:120px;' />
+                                <button id='next-carrusel' style='position:absolute;right:0;z-index:2;background:rgba(0,0,0,0.3);color:#fff;border:none;font-size:2rem;height:100%;width:40px;cursor:pointer;border-radius:0 12px 12px 0;'>›</button>
                             </div>
                             <button id='pong-continue' style='font-size:1.3rem;background:#178a2c;color:#fff;border:2px solid #fff;border-radius:8px;padding:0.7rem 2.5rem;font-weight:bold;font-family:Montserrat,Arial,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.12);cursor:pointer;margin-top:1.5rem;margin-bottom:2rem;'>Continuar</button>
                         `;
                         document.getElementById('pong-continue').onclick = function() {
                             window.location.href = 'https://danjua77.github.io/Sagrado.Puzzle/';
+                        };
+                        const carruselImgs = ['pista1.jpeg','pista2.jpeg','pista3.jpeg','pista4.jpeg'];
+                        let carruselIdx = 0;
+                        const carruselImg = document.getElementById('carrusel-img');
+                        document.getElementById('prev-carrusel').onclick = function() {
+                            carruselIdx = (carruselIdx - 1 + carruselImgs.length) % carruselImgs.length;
+                            carruselImg.src = carruselImgs[carruselIdx];
+                        };
+                        document.getElementById('next-carrusel').onclick = function() {
+                            carruselIdx = (carruselIdx + 1) % carruselImgs.length;
+                            carruselImg.src = carruselImgs[carruselIdx];
                         };
                     };
                 }
