@@ -800,6 +800,12 @@
                                     <img src='pista4.jpeg' class='carrusel-img' style='width:100%;height:100%;object-fit:cover;flex:0 0 100%;max-width:300px;max-height:180px;min-width:120px;border-radius:12px;' />
                                 </div>
                             </div>
+                            <div id='carrusel-indicators' style='display:flex;justify-content:center;align-items:center;margin-top:10px;gap:8px;'>
+                                <span class='carrusel-dot' style='width:10px;height:10px;border-radius:50%;background:#178a2c;opacity:1;display:inline-block;transition:opacity 0.2s;'></span>
+                                <span class='carrusel-dot' style='width:10px;height:10px;border-radius:50%;background:#178a2c;opacity:0.4;display:inline-block;transition:opacity 0.2s;'></span>
+                                <span class='carrusel-dot' style='width:10px;height:10px;border-radius:50%;background:#178a2c;opacity:0.4;display:inline-block;transition:opacity 0.2s;'></span>
+                                <span class='carrusel-dot' style='width:10px;height:10px;border-radius:50%;background:#178a2c;opacity:0.4;display:inline-block;transition:opacity 0.2s;'></span>
+                            </div>
                             <button id='pong-continue' style='font-size:1.3rem;background:#178a2c;color:#fff;border:2px solid #fff;border-radius:8px;padding:0.7rem 2.5rem;font-weight:bold;font-family:Montserrat,Arial,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.12);cursor:pointer;margin-top:1.5rem;margin-bottom:2rem;'>Continuar</button>
                         `;
                         document.getElementById('pong-continue').onclick = function() {
@@ -813,9 +819,13 @@
                         let currentX = 0;
                         let dragging = false;
                         let animating = false;
+                        const dots = document.querySelectorAll('.carrusel-dot');
                         function setIndex(newIdx) {
                             idx = Math.max(0, Math.min(total-1, newIdx));
                             track.style.transform = `translateX(${-idx*100}%)`;
+                            dots.forEach((dot, i) => {
+                                dot.style.opacity = (i === idx) ? '1' : '0.4';
+                            });
                         }
                         // Touch events
                         track.addEventListener('touchstart', function(e) {
